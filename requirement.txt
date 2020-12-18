@@ -1,0 +1,5 @@
+pycryptodomex==3.9.8
+smart-open==2.1.0
+Flask==1.1.2
+Flask-Cors==3.0.9
+libnum==1.7.1
