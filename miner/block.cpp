@@ -7,6 +7,20 @@
 
 using namespace std;
 
+Block::Block() {
+	content = new unsigned char[5];
+	contentLenght = 5;
+	for (unsigned int i = 0; i < contentLenght; ++i)
+	{
+		// Fill all places
+		*(content + i) = NULL;
+	}
+
+	mining = false;
+	blockID = 0;
+	NoncePlacement = find("10101010");
+}
+
 Block::Block(string& json) {
 	// Preprocess json
 	json = regex_replace(json, regex(" "), "");
@@ -24,8 +38,31 @@ Block::Block(string& json) {
 			*(content + i) = NULL;
 	}	
 
+	mining = false;
 	blockID = 0;
 	NoncePlacement = find("10101010");
+}
+
+Block::Block(const char* text, const unsigned int textLen) {
+	// +5 to allocate memory for later nonce setting
+	content = new unsigned char[textLen + 5];
+	contentLenght = textLen + 5;
+	for (unsigned int i = 0; i < contentLenght; ++i)
+	{
+		// Fill all places
+		if (i < textLen)
+			*(content + i) = *(text + i);
+		else
+			*(content + i) = NULL;
+	}
+
+	mining = false;
+	blockID = 0;
+	NoncePlacement = find("10101010");
+}
+
+Block::~Block() {
+	//delete[] content;
 }
 
 void Block::toString(string& output) {
@@ -77,6 +114,7 @@ bool Block::replace(const string& from, const string& to, string& output) {
 
 unsigned int NumDigits(int x)
 {
+	// Fastest way
 	x = abs(x);
 	return (x < 10 ? 1 :
 		(x < 100 ? 2 :
@@ -108,10 +146,6 @@ void Block::setNonce(unsigned char*& newContent, unsigned int& nonce, unsigned i
 	contentLen = contentLenght - 13 + nonceLen;
 
 	// Replace
-	newContent = new unsigned char[contentLenght];
-	/*for (unsigned int i = NoncePlacement; i < (NoncePlacement + nonceLen); ++i) 
-		newContent[i] = to[i - NoncePlacement]; */
-
 	unsigned char* pointer_new = (newContent + NoncePlacement);
 	for (unsigned int i = 0; i < nonceLen; ++i) {
 		*(pointer_new) = to[i];
@@ -127,37 +161,10 @@ void Block::setNonce(unsigned char*& newContent, unsigned int& nonce, unsigned i
 			pointer_new += nonceLen;
 			pointer_old += 8; //10101010
 		}
+		*pointer_new = *pointer_old;
 
-		
-			*pointer_new = *pointer_old;
-
-			//if (*(content + i))
-			//	++contentLen;
-
-			++pointer_new;
-			++pointer_old;
-
-			
-		
-	}
-
-
-	return; 
-	for (unsigned int i = 0, j = 0; i < contentLenght; ++i, ++j) {
-		if (i == NoncePlacement) {
-			i += nonceLen;
-			j += 8; //10101010
-		}
-
-		if (i != NoncePlacement) {
-			*(newContent + i) = *(content + j);
-
-			unsigned char* ddd = (content + j);
-
-			if (*ddd) {
-				++contentLen;
-			}
-		}
+		++pointer_new;
+		++pointer_old;
 	}
 }
 

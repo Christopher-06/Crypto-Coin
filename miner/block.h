@@ -8,8 +8,12 @@ public:
 	unsigned int contentLenght;
 	unsigned int blockID;
 	unsigned int NoncePlacement;
+	bool mining = false;
 
+	Block();
 	Block(std::string& json);
+	Block(const char* text, const unsigned int textLen);
+	~Block();
 	void toString(std::string& output);
 
 	int find(const std::string& pattern);

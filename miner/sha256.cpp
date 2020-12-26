@@ -115,7 +115,7 @@ void SHA256::final(unsigned char* digest)
     }
 }
 
-std::string sha256(std::string input)
+void sha256(std::string& input, std::string& output)
 {
     unsigned char digest[SHA256::DIGEST_SIZE];
     memset(digest, 0, SHA256::DIGEST_SIZE);
@@ -129,5 +129,45 @@ std::string sha256(std::string input)
     buf[2 * SHA256::DIGEST_SIZE] = 0;
     for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
         sprintf(buf + i * 2, "%02x", digest[i]);
-    return std::string(buf);
+
+    output = std::string(buf);
+}
+
+void sha256(unsigned char* input, unsigned int& len, std::string& output)
+{
+    unsigned char digest[SHA256::DIGEST_SIZE];
+    memset(digest, 0, SHA256::DIGEST_SIZE);
+
+    SHA256 ctx = SHA256();
+    ctx.init();
+    ctx.update(input, len);
+    ctx.final(digest);
+
+    char buf[2 * SHA256::DIGEST_SIZE + 1];
+    buf[2 * SHA256::DIGEST_SIZE] = 0;
+    for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
+        sprintf(buf + i * 2, "%02x", digest[i]);
+
+    output = std::string(buf);
+}
+
+bool sha256(unsigned char* input, unsigned int& len)
+{
+    unsigned char digest[SHA256::DIGEST_SIZE];
+    memset(digest, 0, SHA256::DIGEST_SIZE);
+
+    SHA256 ctx = SHA256();
+    ctx.init();
+    ctx.update(input, len);
+    ctx.final(digest);
+
+    char buf[2 * SHA256::DIGEST_SIZE + 1];
+    buf[2 * SHA256::DIGEST_SIZE] = 0;
+    for (int i = 0; i < SHA256::DIGEST_SIZE; i++)
+        sprintf(buf + i * 2, "%02x", digest[i]);
+
+    if(buf[0] == 'c' && buf[1] == '0' && buf[2] == '0' && buf[3] == '0' && buf[4] == '0')
+        return true;
+
+    return false;
 }
