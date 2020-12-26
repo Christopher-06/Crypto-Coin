@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <regex>
 #include <vector>
+#include <fstream>
 
 #include <cpr/cpr.h>
 
@@ -16,9 +17,7 @@
 using json = nlohmann::json;
 using namespace std;
 
-const string MINER_URL = "http://192.168.178.13:8000";
-const string GET_PENDING_URL = MINER_URL + "/get/pending";
-const string SET_NONCE_URL = MINER_URL + "/set/nonce?nonce=";
+string MINER_URL = "", GET_PENDING_URL = "", SET_NONCE_URL = ""; // "http://192.168.178.13:8000";
 
 const unsigned const int const NTHREADS = thread::hardware_concurrency();
 vector<thread> miningThreads;
@@ -27,6 +26,21 @@ int Solutions[] = { -1 };
 
 double average_hashes_per_sec = 0;
 int CorrectNoncesSubmitted = 0;
+
+void readConfig() {
+    ifstream file("config.json");
+
+    // Read file and parse to json
+    ostringstream sstr;
+    sstr << file.rdbuf();
+    json doc = json::parse(sstr.str());
+
+    MINER_URL = doc["MinerUrl"];
+    GET_PENDING_URL = MINER_URL + "/get/pending";
+    SET_NONCE_URL = MINER_URL + "/set/nonce?nonce=";
+
+    file.close();
+}
 
 void mine(Block& currentBlock) {
     // Randomizer
@@ -77,6 +91,8 @@ int main()
 {
     Block currentBlock("Hello", 5);
     
+    readConfig();
+
     // Start all possible threads  
     for (unsigned int i = 1; i < NTHREADS; ++i)
     {
