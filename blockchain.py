@@ -7,8 +7,9 @@ import time
 import json
 
 class Transaction():
-    def __init__(self, sender : str, op_name : str, data : dict, signature = 0, my_hash = "", timestamp = "") -> None:
+    def __init__(self, sender : str, id : str, op_name : str, data : dict, signature = 0, my_hash = "", timestamp = "") -> None:
         self.sender = sender
+        self.id = id
         self.op_name = op_name
         self.data = data
         self.signature = signature
@@ -49,6 +50,7 @@ class Transaction():
 
     def to_json(self, with_my_hash = True) -> dict:
         obj = {
+            "id" : self.id,
             "sender" : str(self.sender),
             "op" : self.op_name,
             "data" : self.data,
@@ -102,6 +104,7 @@ class Block():
                 # Prevent double spend problem
                 return False
 
+        trans.id = str(len(statics.CHAIN)) + "." + str(len(self.transactions))
         self.transactions.append(trans)
         return True
 
@@ -146,16 +149,16 @@ class Block():
         
 
 def init_blockchain():
-    transes = [Transaction("Genesis", "create first block", {}, 0)]
+    transes = [Transaction("Genesis", "0.0", "create first block", {}, 0)]
     if TEST_MODE:
         keys = (596995943162869979, 658656388049988001)
         msg_keys = helper.Message_Encryption.generate_rsa_keys()
         # Create admin account
-        transes.append(Transaction(str(keys[0] * keys[1]), "account_creation", {"msg_public_key" : b64encode(msg_keys[0]).decode()}, 0))
-        transes.append(Transaction(str(keys[0] * keys[1]), "account_setting", { "links" : [], "long_description" : "My name is Admin, I am 18 years old and own this whole thing. Have fun while using it and donate something to me", "profile_image" : "", "name" : "Admin", "short_description" : "Hello, I am the admin of this whole ecosystem", "location" : "Germany"}, 0))
+        transes.append(Transaction(str(keys[0] * keys[1]), "0.1", "account_creation", {"msg_public_key" : b64encode(msg_keys[0]).decode()}, 0))
+        transes.append(Transaction(str(keys[0] * keys[1]), "0.2", "account_setting", { "links" : [], "long_description" : "My name is Admin, I am 18 years old and own this whole thing. Have fun while using it and donate something to me", "profile_image" : "", "name" : "Admin", "short_description" : "Hello, I am the admin of this whole ecosystem", "location" : "Germany"}, 0))
         # Transfer to admin
         msg_obj_receiver = helper.Message_Encryption.encrypt_str(msg_keys[0], "Hello World")
-        transes.append(Transaction("0", "transfer", {"amount" : float(1900), "receiver" : str(keys[0] * keys[1]), "message" : {"sender" : {}, "receiver" : msg_obj_receiver}}, 0))
+        transes.append(Transaction("0", "0.3", "transfer", {"amount" : int(2000), "receiver" : str(keys[0] * keys[1]), "message" : {"sender" : {}, "receiver" : msg_obj_receiver}}, 0))
 
     b = Block(id=0, prev_hash='', my_hash='',
              transactions=transes,
