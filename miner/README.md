@@ -14,6 +14,7 @@ All values are given in kHashes per second. This means for example: 2kH/s equal 
  Gaming PC | `65 kH/s` | `510 kH/s`
  Raspberry Pi 3b+ (1 GB) | `2 kH/s` | `20 kH/s`
 
+
 ---
 
 ## 2. Installtion
