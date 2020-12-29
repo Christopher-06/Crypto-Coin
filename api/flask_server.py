@@ -69,7 +69,7 @@ def send_money():
         # no receiver found
         return jsonify({"status" : "error", "info" : "no receiver found"}), 400
 
-    if sender_acc.send_money(receiver_acc.sender, receiver_acc.msg_keys[0], request.json["amount"], request.json["message"]):
+    if sender_acc.send_money(receiver_acc.sender, receiver_acc.msg_keys[0], int(request.json["amount"] * 100), request.json["message"]):
         return jsonify({"status" : "ok"}), 200
     
     return jsonify({"status" : "failed"})

@@ -1,7 +1,7 @@
 from blockchain import Transaction
 from config import *
 
-# True, when it succeed in the test
+# True, when it succeed the test
 
 def test_inside_open_transactions(trans : Transaction):
     ''' Test if another transaction by the sender is already in open state '''
@@ -156,7 +156,10 @@ class test_transfer():
         
         if isinstance(self.trans.data["receiver"], str) is False:
             return False
-        if isinstance(self.trans.data["amount"], float) is False:
+
+        if isinstance(self.trans.data["amount"], int) is False:
+            return False
+        if self.trans.data["amount"] < 1:
             return False
 
         if isinstance(self.trans.data["message"], dict) is False:
@@ -198,7 +201,7 @@ class test_transfer():
             return False
 
         # Check acc balance
-        balance = 10 if TEST_MODE else 10
+        balance = 1000 if TEST_MODE else 0
         for block in (statics.CHAIN + [statics.PENDING_BLOCK]):
             if block is None:
                 # Maybe pending block

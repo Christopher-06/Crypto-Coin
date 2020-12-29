@@ -8,7 +8,6 @@ A Python3 Version of the Miner is available because when no Miner is currently r
 ## 1. Performance (approximately)
 All values are given in kHashes per second. This means for example: 2kH/s equal to 2,000 Calculations per second.
 
-
  Device | *Python3* | *C++*
 --- | --- | ---
  Office Laptop | `15 kH/s` | `225 kH/s`

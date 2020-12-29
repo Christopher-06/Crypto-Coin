@@ -115,7 +115,7 @@ def get_account():
 
     # Get acc
     transes = []
-    acc = {"pub_key" : str(pub_key), "msg_pub_key" : "", "balance" : float(10 if TEST_MODE else 0), "name" : "", "links" : [], "profile_image" : "", "transactions" : [], "friends" : 0, "location" : "", "long_description" : "", "short_description" : ""}
+    acc = {"pub_key" : str(pub_key), "msg_pub_key" : "", "balance" : int(1000 if TEST_MODE else 0), "name" : "", "links" : [], "profile_image" : "", "transactions" : [], "friends" : 0, "location" : "", "long_description" : "", "short_description" : ""}
 
     for block in (statics.CHAIN + [statics.PENDING_BLOCK]):
         if block is None:
@@ -182,7 +182,7 @@ def post_transaction():
     data = request.json["data"]
     op_name = request.json["op"]
     signature = request.json["signature"]
-    trans = Transaction(sender, op_name, data, signature)
+    trans = Transaction(sender, "", op_name, data, signature)
 
     if trans.prove_signature() is False:
         return jsonify({"status" : "error", "info" : "Signature is wrong"}), 400
