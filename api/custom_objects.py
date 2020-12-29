@@ -72,7 +72,7 @@ class Account():
         # Generate keys and init account obj
         account_keys = helper.Signature.generate_key_pair()
         msg_keys = helper.Message_Encryption.generate_rsa_keys()
-        acc = Account(account_keys, msg_keys)
+        acc = Account(account_keys, msg_keys)  
 
         data = {"msg_public_key" : b64encode(msg_keys[0]).decode()}
         op_name = "account_creation"
