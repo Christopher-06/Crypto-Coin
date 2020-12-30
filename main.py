@@ -26,18 +26,25 @@ parser.add_argument('-l', '--lite', action='store_true', help='Lite version: No 
 args = parser.parse_args()
 
 def node_manager():
+
+    link_subfix = "/get/nodes"
+    if args.node:
+        # Register me
+        link_subfix += "?address=" + NODE_ADDRESS + "&port=" + str(NODE_PORT)
+
     while 1:
         time.sleep(5)
         for n in statics.NODES:
             # test nodes
-            result = get_json_from_site(n + "/get/nodes")
+            result = get_json_from_site(n + link_subfix)
             if result is None:
                 # Node is dead
                 statics.NODES.remove(n)
                 continue
 
             for n2 in result:
-                if n2 not in statics.NODES:
+                # Append his Nodes
+                if not n2 in statics.NODES:
                     statics.NODES.append(n2)
 
 def user_interface():

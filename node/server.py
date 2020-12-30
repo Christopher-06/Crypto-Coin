@@ -8,6 +8,7 @@ from transaction_rules import check_if_valid
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import requests
 
 import logging
 log = logging.getLogger('werkzeug')
@@ -40,6 +41,11 @@ def get_all():
             break
 
     response = {"status" : "ok", "server_time" : datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), "chain" : blocks, "chain_len" : len(statics.CHAIN)}
+    if statics.PENDING_BLOCK:
+        response["pending"] = statics.PENDING_BLOCK.to_json()
+    if statics.CURRENT_BLOCK:
+        response["current"] = statics.CURRENT_BLOCK.to_json()
+
     return jsonify(response), 200
 
 @app.route('/get/pending', methods=['GET'])
@@ -48,11 +54,22 @@ def get_pending():
     if statics.PENDING_BLOCK is None:
         return jsonify({"status" : "waiting"}), 200
     else:
-        d = statics.PENDING_BLOCK.to_json(with_my_hash=False, only_transactions_hashes=True)
-        d["nonce"] = 10101010
+        if request.args.get("data") is None or "mining" in request.args.get("data"):
+            d = statics.PENDING_BLOCK.to_json(with_my_hash=False, only_transactions_hashes=True)
+            d["nonce"] = 10101010
+            return jsonify(d), 200
+        if "full" in request.args.get("data"):
+            return statics.PENDING_BLOCK.to_json(), 200
+
+@app.route('/get/current', methods=['GET'])
+def get_current():
+    if statics.CURRENT_BLOCK is None:
+        return jsonify({"status" : "waiting"}), 400
+    else:
+        d = statics.CURRENT_BLOCK.to_json(with_my_hash=True, only_transactions_hashes=False)
         return jsonify(d), 200
 
-@app.route('/get/chain_len', methods=['GET'])
+@app.route('/get/chain-len', methods=['GET'])
 def get_chain_len():
     ''' Block json --> Show a specified block '''
     return jsonify({"status" : "ok", "len" : len(statics.CHAIN)}), 200
@@ -77,7 +94,23 @@ def get_block():
 
 @app.route('/get/nodes', methods=['GET'])
 def get_nodes():
-    ''' Nodes to json'''
+    ''' Nodes to json & Maybe add'''
+
+    address = request.args.get("address")
+    port = request.args.get("port")
+
+    if not port is None and not address is None:
+        # Test connection
+        link = f'http://{address}:{port}'    
+        r = requests.get(link)
+        if r.status_code == 200:
+            # Test Node Version
+            if VERSION_INFO in r.text:
+                # Test if inside
+                if not link in statics.NODES:
+                    # Finally append
+                    statics.NODES.append(link)
+
     return jsonify(statics.NODES), 200
 
 @app.route('/get/accounts', methods=['GET'])
