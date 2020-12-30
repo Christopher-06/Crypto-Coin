@@ -16,7 +16,7 @@ API_ADDRESS = "192.168.178.13"
 NODE_ADDRESS = "192.168.178.13"
 NODE_PORT = 8000
 
-MIN_BLOCK_TIME_DELTA = 15 #sec
+MIN_BLOCK_TIME_DELTA = 5 #sec
 MIN_BLOCK_TRANSACTIONS = 1
 MIN_BLOCKS_BEFORE_REMOVE = 2
 
@@ -31,6 +31,7 @@ class statics:
 
 
     # Node
+    SYNC_BLOCKCHAIN = False
     CHAIN = []
         # Pending to be finished with mining
     PENDING_BLOCK = None
