@@ -201,7 +201,7 @@ def start_api():
     # Blockchain notifier
     blockchain_statistics_thread = Thread(target=blockchain_notifier)
     blockchain_statistics_thread.daemon = True
-    blockchain_statistics_thread.name = "API - Notifie"
+    blockchain_statistics_thread.name = "API - Notifier Thread"
     blockchain_statistics_thread.start()
     statics.RUNNING_PROCESSES.append(run_thread)
 
