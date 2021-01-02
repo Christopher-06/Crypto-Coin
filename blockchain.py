@@ -1,3 +1,4 @@
+from threading import Thread
 from config import *
 import helper
 
@@ -5,6 +6,9 @@ from base64 import b64encode, b64decode
 from datetime import datetime, timezone
 import time
 import json
+
+import requests
+
 
 class Transaction():
     def __init__(self, sender : str, id : str, op_name : str, data : dict, signature = 0, my_hash = "", timestamp = "") -> None:
@@ -21,9 +25,7 @@ class Transaction():
         self.my_hash = my_hash
         if self.my_hash == "":
             self.my_hash = helper.hash_str(json.dumps(self.to_json(with_my_hash=False)))
-               
-        
-            
+                                
     def check_valid(self, only_hash = False) -> bool:       
         if only_hash:
             if helper.hash_str(json.dumps(self.to_json(with_my_hash=False))) == self.my_hash:
@@ -38,7 +40,9 @@ class Transaction():
         testing = {
             "data" : self.data,
             "op_name" : self.op_name,
-            "sender" : self.sender
+            "sender" : self.sender, 
+            "id" : self.id, 
+            "timestamp" : self.timestamp
         }
         test_str = helper.hash_str(json.dumps(testing))
 
@@ -62,9 +66,45 @@ class Transaction():
 
         return obj       
 
+    def broadcast(self) -> bool:
+        '''Send transaction to all listed Nodes'''
+        if self.signature == 0:
+           return False
+
+        # Start all threads
+        threads, responses = [], []
+        for n in statics.NODES:
+            def do(addr):
+                try:
+                    r = requests.post(f'{addr}/post/transaction', 
+                    json={"sender": self.sender, "id" : self.id, "op" : self.op_name, "data" : self.data, "signature" : self.signature, "timestamp" : self.timestamp})
+                    responses.append(r)
+                except Exception as e:
+                    print("frsfd")
+
+            t = Thread(target=do, args=(n, ), daemon=True)
+            t.start()
+            threads.append(t)
+
+        # wait until all completes or one says: ok
+        while len(threads) > 0 or len(responses) > 0:
+            for t in threads:
+                if not t.isAlive():
+                    threads.remove(t)
+
+            if len(responses) > 0:
+                if responses[0].status_code == 200:
+                    # Succes
+                    return True
+                responses.pop(0)
+
+            
+        # Nobody said: ok
+        return False
+
     @staticmethod
     def sign_transaction(trans, keys) -> int:
-        sign_str = helper.hash_str(json.dumps({"data" : trans.data, "op_name" : trans.op_name,"sender" : trans.sender}))[0:14]
+        sign_str = helper.hash_str(json.dumps({"data" : trans.data, "op_name" : trans.op_name,"sender" : trans.sender, "id" : trans.id, "timestamp" : trans.timestamp}))[0:14]
         return helper.Signature.signe_string(sign_str, keys)
 
 class Block():
@@ -104,7 +144,6 @@ class Block():
                 # Prevent double spend problem
                 return False
 
-        trans.id = str(len(statics.CHAIN)) + "." + str(len(self.transactions))
         self.transactions.append(trans)
         return True
 
@@ -149,16 +188,16 @@ class Block():
         
 
 def init_blockchain():
-    transes = [Transaction("Genesis", "0.0", "create first block", {}, 0)]
+    transes = [Transaction("Genesis", "0161060", "create first block", {}, 0)]
     if TEST_MODE:
         keys = (596995943162869979, 658656388049988001)
         msg_keys = helper.Message_Encryption.generate_rsa_keys()
         # Create admin account
-        transes.append(Transaction(str(keys[0] * keys[1]), "0.1", "account_creation", {"msg_public_key" : b64encode(msg_keys[0]).decode()}, 0))
-        transes.append(Transaction(str(keys[0] * keys[1]), "0.2", "account_setting", { "links" : [], "long_description" : "My name is Admin, I am 18 years old and own this whole thing. Have fun while using it and donate something to me", "profile_image" : "", "name" : "Admin", "short_description" : "Hello, I am the admin of this whole ecosystem", "location" : "Germany"}, 0))
+        transes.append(Transaction(str(keys[0] * keys[1]), "0", "account_creation", {"msg_public_key" : b64encode(msg_keys[0]).decode()}, 0))
+        transes.append(Transaction(str(keys[0] * keys[1]), "1", "account_setting", { "links" : [], "long_description" : "My name is Admin, I am 18 years old and own this whole thing. Have fun while using it and donate something to me", "profile_image" : "", "name" : "Admin", "short_description" : "Hello, I am the admin of this whole ecosystem", "location" : "Germany"}, 0))
         # Transfer to admin
         msg_obj_receiver = helper.Message_Encryption.encrypt_str(msg_keys[0], "Hello World")
-        transes.append(Transaction("0", "0.3", "transfer", {"amount" : int(2000), "receiver" : str(keys[0] * keys[1]), "message" : {"sender" : {}, "receiver" : msg_obj_receiver}}, 0))
+        transes.append(Transaction("0", "2", "transfer", {"amount" : int(2000), "receiver" : str(keys[0] * keys[1]), "message" : {"sender" : {}, "receiver" : msg_obj_receiver}}, 0))
 
     b = Block(id=0, prev_hash='', my_hash='',
              transactions=transes,
