@@ -60,6 +60,9 @@ def agent():
                 break
 
             for trans_index, trans in enumerate(block.transactions):
+                if statics.SYNC_BLOCKCHAIN:
+                    break
+                
                 if trans.data == {}:
                     # already cleared
                     continue

@@ -104,11 +104,6 @@ def manager():
         
 
 def start_miner():
-    if len(statics.NODES) == 0:
-        # Add localhost if nothing else is defined
-        time.sleep(1)
-        statics.NODES.append(f"http://{NODE_ADDRESS}:{NODE_PORT}")
-
     for i in range(MAX_MINING_THREADS):
         t = Thread(target=mine)
         t.daemon = True

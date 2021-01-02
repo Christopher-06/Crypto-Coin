@@ -12,7 +12,7 @@ def blockchain_notifier():
         time.sleep(2)
 
         # get current chain len
-        data = helper.get_json_from_site(f"http://{NODE_ADDRESS}:{NODE_PORT}/get/chain_len")
+        data = helper.get_json_from_site(f"http://{NODE_ADDRESS}:{NODE_PORT}/get/chain-len")
         if data is None:
             # No connection is availabe
             time.sleep(5)
@@ -48,10 +48,10 @@ def blockchain_notifier():
                                 message = trans["data"]["message"]
                             else:
                                 # Message is encrypted
-                                message = helper.Message_Encryption.decrypt_str(acc.msg_keys[1], trans["data"]["message"]["receiver"])
+                                message = helper.Message_Encryption.decrypt_str(acc.msg_keys[1], trans["data"]["message"]["receiver"]).decode()
 
 
-                            acc.notifications.append({"operation" : "transfer", "amount" : trans["data"]["amount"], "message" : message.decode(), "sender" : str(trans["sender"])})
+                            acc.notifications.append({"operation" : "transfer", "amount" : trans["data"]["amount"], "message" : message, "id" : trans["id"], "sender" : str(trans["sender"])})
 
 
 def blockchain_statistics():

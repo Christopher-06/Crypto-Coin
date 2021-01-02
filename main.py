@@ -59,6 +59,9 @@ def user_interface():
             break
 
 def main():
+    # Add one Node
+    statics.NODES.append(f"http://{NODE_ADDRESS}:{NODE_PORT}")
+
     # Start node manager
     node_manager_thread = Thread(target=node_manager)
     node_manager_thread.daemon = True
