@@ -18,6 +18,18 @@ def test_inside_current_block(trans : Transaction):
     return False
 
 def test_generel_formal(trans : Transaction):
+    # TODO: Implement...
+    return True
+
+def test_trans_id(trans : Transaction):
+    if len(trans.id) != TRANSACTION_ID_LEN:
+        return False
+
+    for block in (statics.CHAIN + [statics.PENDING_BLOCK]):
+        if not block is None:
+             for compare_trans in block.transactions:
+                 if trans.id == compare_trans.id:
+                     return False
     return True
 
 #   *** Specific tests
@@ -307,6 +319,8 @@ def check_if_valid(trans : Transaction) -> bool:
         return False
 
     if test_generel_formal(trans) is False:
+        return False
+    if test_trans_id(trans) is False:
         return False
 
     if trans.op_name == "account_creation":

@@ -92,6 +92,21 @@ def get_block():
     b_dict = statics.CHAIN[block_id].to_json()
     return jsonify(b_dict), 200
 
+@app.route('/get/transaction', methods=['GET'])
+def get_transaction():
+    '''Get Transaction based on a given ID'''
+    trans_id = request.args.get("trans_id")
+    if trans_id is None:
+        return jsonify({"status" : "error", "info" : "no trans_id is given"}), 400
+
+    for block in (statics.CHAIN + [statics.PENDING_BLOCK, statics.CURRENT_BLOCK]):
+        if not block is None:
+            for trans in block.transactions:
+                if trans.id == trans_id:
+                    return jsonify(trans.to_json()), 200
+    
+    return jsonify({"status" : "error", "info" : "no Transaction found"}), 400
+
 @app.route('/get/nodes', methods=['GET'])
 def get_nodes():
     ''' Nodes to json & Maybe add'''
@@ -133,8 +148,8 @@ def get_accounts():
                         accs.pop(index)
                         break
                 
-                if len(trans.data["name"]) > 1:
-                    # Only add if a name is availabel
+                if len(str(trans.data["name"])) > 1:
+                    # Only add if a name is available
                     accs.append({"public_key" : sender_str, "name" : trans.data["name"], "profile_image" : trans.data["profile_image"]})
     
     return jsonify({"status" : "ok", "accounts" : accs}), 200
@@ -148,7 +163,7 @@ def get_account():
 
     # Get acc
     transes = []
-    acc = {"pub_key" : str(pub_key), "msg_pub_key" : "", "balance" : int(1000 if TEST_MODE else 0), "name" : "", "links" : [], "profile_image" : "", "transactions" : [], "friends" : 0, "location" : "", "long_description" : "", "short_description" : ""}
+    acc = {"pub_key" : str(pub_key), "msg_pub_key" : "", "balance" : int(1000 if TEST_MODE else 0), "name" : "", "links" : [], "profile_image" : "", "transactions" : [], "friends" : [], "location" : "", "long_description" : "", "short_description" : ""}
 
     for block in (statics.CHAIN + [statics.PENDING_BLOCK]):
         if block is None:
@@ -167,6 +182,11 @@ def get_account():
                     acc["short_description"] = trans.data["short_description"]
                 if trans.op_name == "account_creation":
                     acc["msg_pub_key"] = trans.data["msg_public_key"]
+                if trans.op_name == "set_friend":
+                    if trans.data['type'] == "add":
+                        acc["friends"] = list(acc["friends"]) + [trans.data["target"]]
+                    if trans.data['type'] == "remove":
+                        acc["friends"] = list(acc["friends"]) - [trans.data["target"]]
             
             if trans.op_name == "transfer":
                 if str(trans.sender) == pub_key:
@@ -210,13 +230,17 @@ def post_transaction():
         return jsonify({"status" : "error", "info" : "no sender/operation is given"}), 400
     if not "data" in request.json or not "signature" in request.json:
         return jsonify({"status" : "error", "info" : "no data/signature is given"}), 400
+    if not "id" in request.json or not "timestamp" in request.json:
+        return jsonify({"status" : "error", "info" : "no id/timestamp is given"}), 400
 
     sender = request.json["sender"]
     data = request.json["data"]
+    timestamp = request.json["timestamp"]
+    id = request.json["id"]
     op_name = request.json["op"]
     signature = request.json["signature"]
-    trans = Transaction(sender, "", op_name, data, signature)
-
+    trans = Transaction(sender, id, op_name, data, signature, timestamp=timestamp)
+    
     if trans.prove_signature() is False:
         return jsonify({"status" : "error", "info" : "Signature is wrong"}), 400
    

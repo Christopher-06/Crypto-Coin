@@ -114,6 +114,39 @@ def remove_friend():
     # no acc found
     return jsonify({"status" : "error", "info" : "identifier not found"}), 400  
     
+@app.route('/get-transaction', methods=["GET"])
+def get_transaction():
+    '''Get a TRANSFER transaction and decrypt str'''
+    identifier = request.args.get("identifier")
+    id = request.args.get("id") 
+    if identifier is None or id is None:
+        # Check identifier and id value
+        return jsonify({"status" : "failed", "msg" : "no identifier/id is given"}), 400 
+
+    # Get acc
+    for acc_search in statics.ACCOUNTS:
+        if acc_search.identifier == identifier:
+            
+            r = requests.get(f'http://{NODE_ADDRESS}:{NODE_PORT}/get/transaction?trans_id={id}')
+            if r.status_code != 200:
+                return jsonify({"status" : "error", "info" : "Transaction not found"}), 400  
+
+            trans = json.loads(r.text)
+            if isinstance(trans["data"]["message"], str):
+                # Message is plain text
+                message = trans["data"]["message"]
+            else:
+                # Message is encrypted
+                if trans["sender"] == str(acc_search.sender):
+                    message = helper.Message_Encryption.decrypt_str(acc_search.msg_keys[1], trans["data"]["message"]["sender"]).decode()
+                else:
+                    message = helper.Message_Encryption.decrypt_str(acc_search.msg_keys[1], trans["data"]["message"]["receiver"]).decode()
+
+            return jsonify({"status" : "ok", "transaction" : trans, "message" : message}), 200  
+            
+    
+    # no acc found
+    return jsonify({"status" : "error", "info" : "identifier not found"}), 400  
 
 @app.route('/account-settings', methods=["POST"])
 def account_settings():

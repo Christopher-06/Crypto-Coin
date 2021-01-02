@@ -10,7 +10,7 @@ from node import remove_old
 from node import server
 from config import *
 from blockchain import *
-from transaction_rules import check_if_valid
+from transaction_rules import test_trans_id
 
 import requests
 from operator import itemgetter
@@ -27,8 +27,10 @@ def open_transactions_agent():
             # Get random item
             trans = random.choice(statics.OPEN_TRANSACTIONS)
 
-            # TODO: checking if this transaction already inside
-            statics.CURRENT_BLOCK.append_transaction(trans)
+            if test_trans_id(trans):
+                # Check if transaction is already inside
+                # No double spending, when chain is synced for example...
+                statics.CURRENT_BLOCK.append_transaction(trans)
             statics.OPEN_TRANSACTIONS.remove(trans)
       
 
@@ -106,7 +108,7 @@ def sync_blockchain_agent():
             time.sleep(1)
             continue
 
-        chain_lengths = sorted(chain_lengths, key=itemgetter(0))
+        chain_lengths = sorted(chain_lengths, key=itemgetter(0)) # last element is the longest
         if chain_lengths[-1][0] <= len(statics.CHAIN):
             # Got longest one -> next time
             time.sleep(1)
@@ -114,7 +116,7 @@ def sync_blockchain_agent():
         
         # Get data by the longest and adjust my chain
         # TODO: Valid all inputs
-        SYNC_BLOCKCHAIN = True
+        statics.SYNC_BLOCKCHAIN = True
 
         try:
             r = requests.get(chain_lengths[-1][1] + "/get/all")
@@ -143,7 +145,7 @@ def sync_blockchain_agent():
                         transactions=[Transaction(sender=trans["sender"], op_name=trans["op"], data=trans["data"], signature=trans["signature"], my_hash=trans["hash"], timestamp=trans["timestamp"], id=trans["id"]) for trans in b["transactions"]],
                         timestamp=b["timestamp"], nonce=0) for b in chain]
 
-        SYNC_BLOCKCHAIN = False
+        statics.SYNC_BLOCKCHAIN = False
 
 
        
